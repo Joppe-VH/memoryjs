@@ -900,37 +900,61 @@ Napi::Value callFunction(const Napi::CallbackInfo& args) {
   Napi::Array arguments = args[1].As<Napi::Array>();
   for (unsigned int i = 0; i < arguments.Length(); i++) {
     Napi::Object argument = arguments.Get(i).As<Napi::Object>();
-
+    Napi::Value value = argument.Get(Napi::String::New(env, "value"));
     functions::Type type = (functions::Type) argument.Get(Napi::String::New(env, "type")).As<Napi::Number>().Uint32Value();
 
-    if (type == functions::Type::T_STRING) {
-      std::string stringValue = argument.Get(Napi::String::New(env, "value")).As<Napi::String>().Utf8Value();
-      parsedArgs.push_back({ type, &stringValue });
-    }
+    switch (type) {
+      case functions::Type::T_STRING: {
+        std::string stringValue = value.As<Napi::String>().Utf8Value();
+        parsedArgs.push_back({ type, &stringValue });
+      } break;
 
-    if (type == functions::Type::T_INT) {
-      int data = argument.Get(Napi::String::New(env, "value")).As<Napi::Number>().Int32Value();
+      case functions::Type::T_INT: {
+        int data = value.As<Napi::Number>().Int32Value();
 
-      // As we only pass the addresses of the variable to the `call` function and not a copy
-      // of the variable itself, we need to ensure that the variable stays alive and in a unique
-      // memory location until the `call` function has been executed. So manually allocate memory,
-      // track it, and then free it once the function has been called.
-      // TODO: find a better solution?
-      int* memory = (int*) malloc(sizeof(int));
-      *memory = data;
-      heap.push_back(memory);
+        // As we only pass the addresses of the variable to the `call` function and not a copy
+        // of the variable itself, we need to ensure that the variable stays alive and in a unique
+        // memory location until the `call` function has been executed. So manually allocate memory,
+        // track it, and then free it once the function has been called.
+        // TODO: find a better solution?
+        int* memory = (int*) malloc(sizeof(int));
+        *memory = data;
+        heap.push_back(memory);
 
-      parsedArgs.push_back({ type, memory });
-    }
+        parsedArgs.push_back({ type, memory });
+      } break;
 
-    if (type == functions::Type::T_FLOAT) {
-      float data = argument.Get(Napi::String::New(env, "value")).As<Napi::Number>().FloatValue();
+      case functions::Type::T_FLOAT: {
+        float data = value.As<Napi::Number>().FloatValue();
 
-      float* memory = (float*) malloc(sizeof(float));
-      *memory = data;
-      heap.push_back(memory);
+        float* memory = (float*) malloc(sizeof(float));
+        *memory = data;
+        heap.push_back(memory);
 
-      parsedArgs.push_back({ type, memory });
+        parsedArgs.push_back({ type, memory });
+      } break;
+
+      case functions::Type::T_BOOL: {
+        bool data = value.As<Napi::Boolean>().Value();
+
+        bool* memory = (bool*) malloc(sizeof(bool));
+        *memory = data;
+        heap.push_back(memory);
+
+        parsedArgs.push_back({ type, memory });
+      } break;
+
+      case functions::Type::T_POINTER: {
+        void * data = value.IsBigInt()
+          ? (void *) value.As<Napi::BigInt>().Uint64Value(nullptr)
+          : (void *) value.As<Napi::Number>().Int64Value();
+
+        void** memory = (void**) malloc(sizeof(void *));
+        *memory = data;
+        heap.push_back(memory);
+
+        parsedArgs.push_back({ type, memory });
+      } break;
     }
   }
 
@@ -939,14 +963,13 @@ Napi::Value callFunction(const Napi::CallbackInfo& args) {
 
   DWORD64 address;
   if (args[3].As<Napi::BigInt>().IsBigInt()) {
-    bool lossless;
-    address = args[3].As<Napi::BigInt>().Uint64Value(&lossless);
+    address = args[3].As<Napi::BigInt>().Uint64Value(nullptr);
   } else {
     address = args[3].As<Napi::Number>().Int64Value();
   }
 
   char* errorMessage = "";
-  Call data = functions::call<int>(handle, parsedArgs, returnType, address, &errorMessage);
+  Call data = functions::call<uint64_t>(handle, parsedArgs, returnType, address, &errorMessage);
 
   // Free all the memory we allocated
   for (auto &memory : heap) {
@@ -994,7 +1017,7 @@ Napi::Value callFunction(const Napi::CallbackInfo& args) {
 
   if (args.Length() == 5) {
     // Callback to let the user handle with the information
-    Napi::Function callback = args[2].As<Napi::Function>();
+    Napi::Function callback = args[4].As<Napi::Function>();
     callback.Call(env.Global(), { Napi::String::New(env, errorMessage), info });
     return env.Null();
   } else {

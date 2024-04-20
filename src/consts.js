@@ -57,6 +57,7 @@ const dataTypes = {
     T_INT: 0x4,
     T_DOUBLE: 0x5,
     T_FLOAT: 0x6,
+    T_POINTER: 0x7,
   },
 };
 
