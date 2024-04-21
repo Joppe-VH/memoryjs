@@ -720,26 +720,50 @@ Napi::Value writeBuffer(const Napi::CallbackInfo& args) {
 
 Napi::Value findPattern(const Napi::CallbackInfo& args) {
   Napi::Env env = args.Env();
+  
+  // handle, patern, flags
+  // handle, patern, flags, patternOffset
+  // handle, patern, flags, callback
+  // handle, patern, flags, patternOffset, callback
 
-  if (args.Length() != 4 && args.Length() != 5) {
-    Napi::Error::New(env, "requires 4 arguments, 5 with callback").ThrowAsJavaScriptException();
+  if (args.Length() < 3) {
+    Napi::Error::New(env, "requires at least 3 arguments").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (!args[0].IsNumber() || !args[1].IsString() || !args[2].IsNumber() || !args[3].IsNumber()) {
-    Napi::Error::New(env, "expected: number, string, number, number").ThrowAsJavaScriptException();
+  if (!args[0].IsNumber() || !args[1].IsString() || !args[2].IsNumber()) {
+    Napi::Error::New(env, "First argument (Handle) must be a number.\nSecond argument (patern) must be a string.\nThird argument (flags) must be a number.").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() == 5 && !args[4].IsFunction()) {
-    Napi::Error::New(env, "callback argument must be a function").ThrowAsJavaScriptException();
+  if (args.Length() == 4 && !args[3].IsNumber() && !args[3].IsFunction()) {
+    Napi::Error::New(env, "Fourth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (args.Length() > 4 && !args[3].IsNumber() || !args[4].IsFunction()) {
+    Napi::Error::New(env, "With 5 arguments, the fourth must be a number (patternOffset) and the fith a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
   HANDLE handle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
   std::string pattern(args[1].As<Napi::String>().Utf8Value());
   short flags = args[2].As<Napi::Number>().Uint32Value();
-  uint32_t patternOffset = args[3].As<Napi::Number>().Uint32Value();
+  uint32_t patternOffset = args[3].IsNumber()
+    ? args[3].As<Napi::Number>().Uint32Value()
+    : 0;
+  Napi::Function callback;
+  bool useCallback = true;
+
+  if (args.Length() > 4) {
+    callback = args[4].As<Napi::Function>();
+  }
+  else if (args.Length() == 4 && args[3].IsFunction()) {
+    callback = args[3].As<Napi::Function>();
+  }
+  else {
+    useCallback = false;
+  }
 
   // matching address
   uintptr_t address = 0;
@@ -758,8 +782,7 @@ Napi::Value findPattern(const Napi::CallbackInfo& args) {
     errorMessage = "unable to match pattern inside any modules or regions";
   }
 
-  if (args.Length() == 5) {
-    Napi::Function callback = args[4].As<Napi::Function>();
+  if (useCallback) {
     callback.Call(env.Global(), { Napi::String::New(env, errorMessage), Napi::Value::From(env, address) });
     return env.Null();
   } else {
@@ -770,18 +793,28 @@ Napi::Value findPattern(const Napi::CallbackInfo& args) {
 Napi::Value findPatternByModule(const Napi::CallbackInfo& args) {
   Napi::Env env = args.Env();
 
-  if (args.Length() != 5 && args.Length() != 6) {
-    Napi::Error::New(env, "requires 5 arguments, 6 with callback").ThrowAsJavaScriptException();
+  // handle, moduleName, patern, flags
+  // handle, moduleName, patern, flags, patternOffset
+  // handle, moduleName, patern, flags, callback
+  // handle, moduleName, patern, flags, patternOffset, callback
+
+  if (args.Length() < 4) {
+    Napi::Error::New(env, "requires at least 4 arguments").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (!args[0].IsNumber() || !args[1].IsString() || !args[2].IsString() || !args[3].IsNumber() || !args[4].IsNumber()) {
-    Napi::Error::New(env, "expected: number, string, string, number, number").ThrowAsJavaScriptException();
+  if (!args[0].IsNumber() || !args[1].IsString() || !args[2].IsString() || !args[3].IsNumber()) {
+    Napi::Error::New(env, "First argument (Handle) must be a number.\nSecond argument (moduleName) must be a string.\nThird argument (patern) must be a string.\nFourth argument (flags) must be a number").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() == 6 && !args[5].IsFunction()) {
-    Napi::Error::New(env, "callback argument must be a function").ThrowAsJavaScriptException();
+  if (args.Length() == 5 && !args[4].IsNumber() && !args[4].IsFunction()) {
+    Napi::Error::New(env, "Fifth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (args.Length() > 5 && !args[4].IsNumber() || !args[5].IsFunction()) {
+    Napi::Error::New(env, "With 6 arguments, the fifth must be a number (patternOffset) and the sixth a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
@@ -789,7 +822,21 @@ Napi::Value findPatternByModule(const Napi::CallbackInfo& args) {
   std::string moduleName(args[1].As<Napi::String>().Utf8Value());
   std::string pattern(args[2].As<Napi::String>().Utf8Value());
   short flags = args[3].As<Napi::Number>().Uint32Value();
-  uint32_t patternOffset = args[4].As<Napi::Number>().Uint32Value();
+  uint32_t patternOffset = args[4].IsNumber()
+    ? args[4].As<Napi::Number>().Uint32Value()
+    : 0;
+  Napi::Function callback;
+  bool useCallback = true;
+
+  if (args.Length() > 5) {
+    callback = args[5].As<Napi::Function>();
+  }
+  else if (args.Length() == 5 && args[4].IsFunction()) {
+    callback = args[4].As<Napi::Function>();
+  }
+  else {
+    useCallback = false;
+  }
 
   // matching address
   uintptr_t address = 0;
@@ -811,8 +858,7 @@ Napi::Value findPatternByModule(const Napi::CallbackInfo& args) {
     errorMessage = "unable to match pattern inside any modules or regions";
   }
 
-  if (args.Length() == 6) {
-    Napi::Function callback = args[5].As<Napi::Function>();
+  if (useCallback) {
     callback.Call(env.Global(), { Napi::String::New(env, errorMessage), Napi::Value::From(env, address) });
     return env.Null();
   } else {
@@ -823,18 +869,28 @@ Napi::Value findPatternByModule(const Napi::CallbackInfo& args) {
 Napi::Value findPatternByAddress(const Napi::CallbackInfo& args) {
   Napi::Env env = args.Env();
 
-  if (args.Length() != 5 && args.Length() != 6) {
-    Napi::Error::New(env, "requires 5 arguments, 6 with callback").ThrowAsJavaScriptException();
+  // handle, baseAddress, patern, flags
+  // handle, baseAddress, patern, flags, patternOffset
+  // handle, baseAddress, patern, flags, callback
+  // handle, baseAddress, patern, flags, patternOffset, callback
+
+  if (args.Length() < 4) {
+    Napi::Error::New(env, "requires at least 4 arguments").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (!args[0].IsNumber() || !args[1].IsNumber() || !args[2].IsString() || !args[3].IsNumber() || !args[4].IsNumber()) {
-    Napi::Error::New(env, "expected: number, number, string, number, number").ThrowAsJavaScriptException();
+  if (!args[0].IsNumber() || !args[1].IsNumber() || !args[2].IsString() || !args[3].IsNumber()) {
+    Napi::Error::New(env, "First argument (Handle) must be a number.\nSecond argument (baseAddress) must be a number or bigint.\nThird argument (patern) must be a string.\nFourth argument (flags) must be a number").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() == 6 && !args[5].IsFunction()) {
-    Napi::Error::New(env, "callback argument must be a function").ThrowAsJavaScriptException();
+  if (args.Length() == 5 && !args[4].IsNumber() && !args[4].IsFunction()) {
+    Napi::Error::New(env, "Fifth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (args.Length() > 5 && !args[4].IsNumber() || !args[5].IsFunction()) {
+    Napi::Error::New(env, "With 6 arguments, the fifth must be a number (patternOffset) and the sixth a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
@@ -850,7 +906,21 @@ Napi::Value findPatternByAddress(const Napi::CallbackInfo& args) {
 
   std::string pattern(args[2].As<Napi::String>().Utf8Value());
   short flags = args[3].As<Napi::Number>().Uint32Value();
-  uint32_t patternOffset = args[4].As<Napi::Number>().Uint32Value();
+  uint32_t patternOffset = args[4].IsNumber()
+    ? args[4].As<Napi::Number>().Uint32Value()
+    : 0;
+  Napi::Function callback;
+  bool useCallback = true;
+
+  if (args.Length() > 5) {
+    callback = args[5].As<Napi::Function>();
+  }
+  else if (args.Length() == 5 && args[4].IsFunction()) {
+    callback = args[4].As<Napi::Function>();
+  }
+  else {
+    useCallback = false;
+  }
 
   // matching address
   uintptr_t address = 0;
@@ -868,7 +938,7 @@ Napi::Value findPatternByAddress(const Napi::CallbackInfo& args) {
     errorMessage = "unable to match pattern inside any modules or regions";
   }
 
-  if (args.Length() == 6) {
+  if (useCallback) {
     Napi::Function callback = args[5].As<Napi::Function>();
     callback.Call(env.Global(), { Napi::String::New(env, errorMessage), Napi::Value::From(env, address) });
     return env.Null();
