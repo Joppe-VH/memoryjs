@@ -727,7 +727,7 @@ Napi::Value findPattern(const Napi::CallbackInfo& args) {
   }
 
   if (!args[0].IsNumber() || !args[1].IsString() || !args[2].IsNumber() || !args[3].IsNumber()) {
-    Napi::Error::New(env, "expected: number, string, string, number").ThrowAsJavaScriptException();
+    Napi::Error::New(env, "expected: number, string, number, number").ThrowAsJavaScriptException();
     return env.Null();
   }
 
