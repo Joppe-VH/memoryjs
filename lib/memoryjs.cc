@@ -885,7 +885,7 @@ Napi::Value callFunction(const Napi::CallbackInfo& args) {
     return env.Null();
   }
 
-  if (!args[0].IsNumber() && !args[1].IsObject() && !args[2].IsNumber() && !args[3].IsNumber()) {
+  if (!args[0].IsNumber() || !args[1].IsObject() || !args[2].IsNumber() || !args[3].IsNumber()) {
     Napi::Error::New(env, "invalid arguments").ThrowAsJavaScriptException();
     return env.Null();
   }
