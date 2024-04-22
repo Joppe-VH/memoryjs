@@ -1105,8 +1105,8 @@ Napi::Value virtualProtectEx(const Napi::CallbackInfo& args) {
     return env.Null();
   }
 
-  if (!args[0].IsNumber() && !args[1].IsNumber() && !args[2].IsNumber()) {
-    Napi::Error::New(env, "All arguments should be numbers.").ThrowAsJavaScriptException();
+  if (!args[0].IsNumber() || !args[1].IsNumber() || !args[2].IsNumber() || !args[3].IsNumber()) {
+    Napi::Error::New(env, "First 4 arguments should be numbers.").ThrowAsJavaScriptException();
     return env.Null();
   }
 
