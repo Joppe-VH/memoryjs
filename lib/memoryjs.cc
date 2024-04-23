@@ -1172,7 +1172,7 @@ Napi::Value getRegions(const Napi::CallbackInfo& args) {
 
   Napi::Array regionsArray = Napi::Array::New(env, regions.size());
 
-  for (std::vector<MEMORY_BASIC_INFORMATION>::size_type i = 0; i != regions.size(); i++) {
+  for (std::vector<MEMORY_BASIC_INFORMATION>::size_type i = 0; i < regions.size(); i++) {
     Napi::Object region = Napi::Object::New(env);
 
     region.Set(Napi::String::New(env, "BaseAddress"), Napi::Value::From(env, (DWORD64) regions[i].BaseAddress));
