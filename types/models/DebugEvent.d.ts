@@ -1,4 +1,4 @@
-import { Register } from "../enums/Register";
+import { Register } from "../unions/Register";
 
 export declare interface DebugEvent {
     processId: number

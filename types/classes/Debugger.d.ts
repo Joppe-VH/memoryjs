@@ -1,12 +1,13 @@
 import MemoryJs from "../index"
-import { Register } from "../enums/Register"
-import { TriggerType } from "../enums/TriggerType"
-import { DataType } from "../enums/DataType"
+import { Register } from "../unions/Register"
+import { TriggerType } from "../unions/TriggerType"
+import { DataType } from "../unions/DataType"
+import { EventEmitter } from "events"
 
 export declare class Debugger extends EventEmitter {
     constructor(memoryjs: typeof MemoryJs)
 
-    attach(processId: number, killOnDetatch: boolean = false): boolean;
+    attach(processId: number, killOnDetatch?: boolean /*default = false*/): boolean;
     detatch(processId: number): boolean;
     removeHardwareBreakpoint(processId: number, register: Register): boolean;
     setHardwareBreakpoint(
@@ -15,5 +16,5 @@ export declare class Debugger extends EventEmitter {
         trigger: TriggerType,
         dataType: DataType
     ): Register
-    monitor(register: Register, timeout: number = 100): void;
+    monitor(register: Register, timeout?: number /*default = 100*/): void;
 }

@@ -1,20 +1,27 @@
-import type { DataType, DataTypeBigInt, DataTypeBoolean, DataTypeNumber, DataTypePointer, DataTypeString, DataTypeVector3, DataTypeVector4 } from "./enums/DataType";
-import type { Callback } from "./models/Callback";
-import type { Process } from "./models/Process";
-import type { Vector3, Vector4 } from "./models/Vector";
-import type { SignatureType } from "./enums/SignatureType";
-import type { FunctionArg } from "./models/FunctionArg";
-import { ReturnTypeBoolean, ReturnTypeNumber, ReturnTypeString, ReturnTypeVoid } from "./enums/ReturnType";
-import { ReturnObject } from "./models/ReturnObject";
-import { ProtectionType } from "./enums/ProtectionType";
-import { MemoryAllocationType } from "./enums/MemoryAllocationType";
+import { DataType, DataTypeNumber, DataTypeBigInt, DataTypeBoolean, DataTypeString, DataTypeVector3, DataTypeVector4, DataTypePointer } from "./unions/DataType";
+import { FunctionDataType } from "./unions/FunctionDataType";
+import { MemoryAllocationType } from "./unions/MemoryAllocationType";
+import { MemoryPageType } from "./unions/MemoryPageType";
+import { MemoryState } from "./unions/MemoryState";
+import { ProtectionType } from "./unions/ProtectionType";
+import { Register } from "./unions/Register";
+import { ReturnTypeVoid, ReturnTypeBoolean, ReturnTypeNumber, ReturnTypeString } from "./unions/ReturnType";
+import { SignatureType } from "./unions/SignatureType";
+import { TriggerType } from "./unions/TriggerType";
+
+import { Callback } from "./models/Callback";
+import { DebugEvent } from "./models/DebugEvent";
+import { FunctionArg } from "./models/FunctionArg";
 import { MemoryBasicInformation } from "./models/MemoryBasicInformation";
-import { Register } from "./enums/Register"
-import { TriggerType } from "./enums/TriggerType";
+import { Module } from "./models/Module";
+import { Process } from "./models/Process";
+import { ReturnObject } from "./models/ReturnObject";
+import { Vector3, Vector4 } from "./models/Vector";
 
-
+import { Debugger } from "./classes/Debugger";
 
 declare namespace MemoryJs {
+
     function openProcess(processIdentifier: number | string): Process;
     function openProcess(processIdentifier: number | string, callback: Callback<Process>): void;
 
@@ -280,8 +287,137 @@ declare namespace MemoryJs {
     function removeHardwareBreakpoint(processId: number, hardwareRegister: Register): boolean;
 
     const Debugger: Debugger;
-    
-    export import D = DataType;
+
+    // constants
+    const BYTE: 'byte';
+    const UBYTE: 'ubyte';
+    const CHAR: 'char';
+    const UCHAR: 'uchar';
+    const INT8: 'int8';
+    const UINT8: 'uint8';
+    const INT16: 'int16';
+    const INT16_BE: 'int16_be';
+    const UINT16: 'uint16';
+    const UINT16_BE: 'uint16_be';
+    const SHORT: 'short';
+    const SHORT_BE: 'short_be';
+    const USHORT: 'ushort';
+    const USHORT_BE: 'ushort_be';
+    const LONG: 'long';
+    const LONG_BE: 'long_be';
+    const ULONG: 'ulong';
+    const ULONG_BE: 'ulong_be';
+    const INT: 'int';
+    const INT_BE: 'int_be';
+    const UINT: 'uint';
+    const UINT_BE: 'uint_be';
+    const INT32: 'int32';
+    const INT32_BE: 'int32_be';
+    const UINT32: 'uint32';
+    const UINT32_BE: 'uint32_be';
+    const INT64: 'int64';
+    const INT64_BE: 'int64_be';
+    const UINT64: 'uint64';
+    const UINT64_BE: 'uint64_be';
+    const WORD: 'word';
+    const DWORD: 'dword';
+    const FLOAT: 'float';
+    const FLOAT_BE: 'float_be';
+    const DOUBLE: 'double';
+    const DOUBLE_BE: 'double_be';
+    const BOOL: 'bool';
+    const BOOLEAN: 'boolean';
+    const PTR: 'ptr';
+    const POINTER: 'pointer';
+    const UPTR: 'uptr';
+    const UPOINTER: 'upointer';
+    const STR: 'str';
+    const STRING: 'string';
+    const VEC3: 'vec3';
+    const VECTOR3: 'vector3';
+    const VEC4: 'vec4';
+    const VECTOR4: 'vector4';
+    const T_VOID: 0x0;
+    const T_STRING: 0x1;
+    const T_CHAR: 0x2;
+    const T_BOOL: 0x3;
+    const T_INT: 0x4;
+    const T_DOUBLE: 0x5;
+    const T_FLOAT: 0x6;
+    const T_POINTER: 0x7;
+    const NORMAL: 0x0;
+    const READ: 0x1;
+    const SUBTRACT: 0x2;
+    const PAGE_NOACCESS: 0x01;
+    const PAGE_READONLY: 0x02;
+    const PAGE_READWRITE: 0x04;
+    const PAGE_WRITECOPY: 0x08;
+    const PAGE_EXECUTE: 0x10;
+    const PAGE_EXECUTE_READ: 0x20;
+    const PAGE_EXECUTE_READWRITE: 0x40;
+    const PAGE_EXECUTE_WRITECOPY: 0x80;
+    const PAGE_GUARD: 0x100;
+    const PAGE_NOCACHE: 0x200;
+    const PAGE_WRITECOMBINE: 0x400;
+    const PAGE_ENCLAVE_UNVALIDATED: 0x20000000;
+    const PAGE_TARGETS_NO_UPDATE: 0x40000000;
+    const PAGE_TARGETS_INVALID: 0x40000000;
+    const PAGE_ENCLAVE_THREAD_CONTROL: 0x80000000;
+    const MEM_COMMIT: 0x00001000;
+    const MEM_RESERVE: 0x00002000;
+    const MEM_RESET: 0x00080000;
+    const MEM_TOP_DOWN: 0x00100000;
+    const MEM_RESET_UNDO: 0x1000000;
+    const MEM_LARGE_PAGES: 0x20000000;
+    const MEM_PHYSICAL: 0x00400000;
+    const MEM_PRIVATE: 0x20000;
+    const MEM_MAPPED: 0x40000;
+    const MEM_IMAGE: 0x1000000;
+    const DR0: 0x0;
+    const DR1: 0x1;
+    const DR2: 0x2;
+    const DR3: 0x3;
+    const TRIGGER_EXECUTE: 0x0;
+    const TRIGGER_ACCESS: 0x3;
+    const TRIGGER_WRITE: 0x1;
 }
 
-export = MemoryJs
+export { 
+    MemoryJs as default,
+
+    // Union Types
+    DataType,
+    DataTypeNumber,
+    DataTypeBigInt,
+    DataTypeBoolean,
+    DataTypeString,
+    DataTypeVector3,
+    DataTypeVector4,
+    DataTypePointer,
+    FunctionDataType,
+    MemoryAllocationType,
+    MemoryPageType,
+    MemoryState,
+    ProtectionType,
+    Register,
+    ReturnTypeVoid,
+    ReturnTypeBoolean,
+    ReturnTypeNumber,
+    ReturnTypeString,
+    SignatureType,
+    TriggerType,
+
+    // Models
+    Callback,
+    DebugEvent,
+    FunctionArg,
+    MemoryBasicInformation,
+    Module,
+    Process,
+    ReturnObject,
+    Vector3,
+    Vector4,
+
+    // Classes
+    Debugger
+};

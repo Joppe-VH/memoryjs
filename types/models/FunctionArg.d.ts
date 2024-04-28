@@ -1,23 +1,29 @@
-import type { FunctionDataType as FDT } from "../enums/FunctionDataType";
+import type { FunctionDataType } from "../unions/FunctionDataType";
+
+declare type ArgumentType<T extends FunctionDataType> = T;
 
 declare interface FunctionArgBoolean {
-    type: FDT.T_BOOL
+    type: ArgumentType<0x3 /*T_BOOL*/>
     value: boolean
 }
 declare interface FunctionArgNumber {
-    type: FDT.T_INT | FDT.T_FLOAT | FDT.T_DOUBLE
+    type: ArgumentType< 
+        | 0x4 /*T_INT*/
+        | 0x5 /*T_DOUBLE*/
+        | 0x6 /*T_FLOAT*/ >,
     value: number
 }
 declare interface FunctionArgString {
-    type: FDT.T_STRING
+    type: ArgumentType< 0x1 /*T_STRING*/>
     value: string
 }
 declare interface FunctionArgPointer {
-    type: FDT.T_POINTER
+    type: ArgumentType< 0x7 /*T_POINTER*/>
     value: number | bigint
 }
 
-export declare type FunctionArg = FunctionArgBoolean
+export declare type FunctionArg = 
+    | FunctionArgBoolean
     | FunctionArgNumber
     | FunctionArgString
     | FunctionArgPointer

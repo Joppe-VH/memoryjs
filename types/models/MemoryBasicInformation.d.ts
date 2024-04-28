@@ -1,6 +1,6 @@
-import { MemoryPageType } from "../enums/MemoryPageType"
-import { MemoryState } from "../enums/MemoryState"
-import { ProtectionType } from "../enums/ProtectionType"
+import { MemoryPageType } from "../unions/MemoryPageType"
+import { MemoryState } from "../unions/MemoryState"
+import { ProtectionType } from "../unions/ProtectionType"
 
 export declare interface MemoryBasicInformation {
     BaseAddress: number
