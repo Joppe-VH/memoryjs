@@ -1018,12 +1018,13 @@ Napi::Value callFunction(const Napi::CallbackInfo& args) {
         void * data = value.IsBigInt()
           ? (void *) value.As<Napi::BigInt>().Uint64Value(nullptr)
           : (void *) value.As<Napi::Number>().Int64Value();
+        size_t byteSize = (size_t) argument.Get(Napi::String::New(env, "byteSize")).As<Napi::Number>().Uint32Value();
 
         void** memory = (void**) malloc(sizeof(void *));
         *memory = data;
         heap.push_back(memory);
 
-        parsedArgs.push_back({ type, memory });
+        parsedArgs.push_back({ type, memory, byteSize });
       } break;
     }
   }
