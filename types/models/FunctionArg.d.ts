@@ -20,7 +20,6 @@ declare interface FunctionArgString {
 declare interface FunctionArgPointer {
     type: ArgumentType< 0x7 /*T_POINTER*/>
     value: number | bigint
-    byteSize: number
 }
 
 export declare type FunctionArg = 

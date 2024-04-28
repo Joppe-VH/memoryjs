@@ -28,7 +28,6 @@ namespace functions {
   struct Arg {
     Type type;
     LPVOID value;
-    SIZE_T reservedBytes = 0x08;
   };
 
   LPVOID reserveString(HANDLE hProcess, const char* value, SIZE_T size);
@@ -37,7 +36,6 @@ namespace functions {
   template <class returnDataType>
   Call call(HANDLE pHandle, std::vector<Arg> args, Type returnType, DWORD64 address, char** errorMessage) {
     std::vector<unsigned char> argShellcode;
-    unsigned char shadowSpace = 0x00;
 
     // x84_64 requires first 4 arguments to be past in registers rcx, rdx, r8, and r9 in that order.
     // Single and double precision floats go into xmm0, xmm1, xmm2, and xmm3 instead.
@@ -96,18 +94,18 @@ namespace functions {
       // If single or double precision float, use the xmm registers instead.
       if (useFloatOps)
         argShellcode.insert(argShellcode.end(), std::begin(floatOps[i]), std::end(floatOps[i]));
-
-      // adjust needed shadowspace
-      shadowSpace += static_cast<unsigned char>(arg.reservedBytes);
     }
 
     
+    // shadow space set to fixed 32 bytes as required by the "C" calling convention spec.
+    // call adds the return adress (8 bytes) to the stack which will break stack allignment.
+    // change rsp by another 8 bytes to allign it back to 16 bytes.
     // 5th argument and beyond not implemented yet so don't need to decrement rsp further for now.
     std::vector<unsigned char> callShellcode = {
       0x48, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MOV rax, 0x0000000000000000 (function adress to be replaced later)
-      0x48, 0x83, 0xec, shadowSpace, // SUB rsp, .. (create shadow space)
+      0x48, 0x83, 0xec, 0x28, // SUB rsp, 40 (allign stack and create shadow space)
       0xff, 0xd0, // CALL rax
-      0x48, 0x83, 0xc4, shadowSpace, // ADD rsp, .. (undo shadow space)
+      0x48, 0x83, 0xc4, 0x28, // ADD rsp, 40 (allign stack and undo shadow space)
     };
 
     // Replace placeholder with actual function adress.
