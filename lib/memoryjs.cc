@@ -736,12 +736,12 @@ Napi::Value findPattern(const Napi::CallbackInfo& args) {
     return env.Null();
   }
 
-  if (args.Length() == 4 && !args[3].IsNumber() && !args[3].IsFunction()) {
+  if (args.Length() == 4 && (!args[3].IsNumber() && !args[3].IsFunction())) {
     Napi::Error::New(env, "Fourth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() > 4 && !args[3].IsNumber() || !args[4].IsFunction()) {
+  if (args.Length() > 4 && (!args[3].IsNumber() || !args[4].IsFunction())) {
     Napi::Error::New(env, "With 5 arguments, the fourth must be a number (patternOffset) and the fith a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
@@ -808,12 +808,12 @@ Napi::Value findPatternByModule(const Napi::CallbackInfo& args) {
     return env.Null();
   }
 
-  if (args.Length() == 5 && !args[4].IsNumber() && !args[4].IsFunction()) {
+  if (args.Length() == 5 && (!args[4].IsNumber() && !args[4].IsFunction())) {
     Napi::Error::New(env, "Fifth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() > 5 && !args[4].IsNumber() || !args[5].IsFunction()) {
+  if (args.Length() > 5 && (!args[4].IsNumber() || !args[5].IsFunction())) {
     Napi::Error::New(env, "With 6 arguments, the fifth must be a number (patternOffset) and the sixth a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
@@ -884,12 +884,12 @@ Napi::Value findPatternByAddress(const Napi::CallbackInfo& args) {
     return env.Null();
   }
 
-  if (args.Length() == 5 && !args[4].IsNumber() && !args[4].IsFunction()) {
+  if (args.Length() == 5 && (!args[4].IsNumber() && !args[4].IsFunction())) {
     Napi::Error::New(env, "Fifth argument must be either a number (patternOffset) or function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
 
-  if (args.Length() > 5 && !args[4].IsNumber() || !args[5].IsFunction()) {
+  if (args.Length() > 5 && (!args[4].IsNumber() || !args[5].IsFunction())) {
     Napi::Error::New(env, "With 6 arguments, the fifth must be a number (patternOffset) and the sixth a function (callback).").ThrowAsJavaScriptException();
     return env.Null();
   }
