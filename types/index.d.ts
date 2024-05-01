@@ -15,6 +15,7 @@ import { FunctionArg } from "./models/FunctionArg";
 import { MemoryBasicInformation } from "./models/MemoryBasicInformation";
 import { Module } from "./models/Module";
 import { Process } from "./models/Process";
+import { ProcessEntry } from "./models/ProcessEntry";
 import { ReturnObject } from "./models/ReturnObject";
 import { Vector3, Vector4 } from "./models/Vector";
 
@@ -25,10 +26,12 @@ declare namespace MemoryJs {
     function openProcess(processIdentifier: number | string): Process;
     function openProcess(processIdentifier: number | string, callback: Callback<Process>): void;
 
-    function closeProcess(handle: number): void;
+    function closeHandle(handle: number): void;
 
-    function getProcesses(): Process[];
-    function getProcesses(callback: Callback<Process[]>): void;
+    function isProcessAlive(handle: number): boolean;
+
+    function getProcesses(): ProcessEntry[];
+    function getProcesses(callback: Callback<ProcessEntry[]>): void;
 
     function findModule(moduleName: string, processId: number): Module;
     function findModule(moduleName: string, processId: number, callback: Callback<Module>): void;
@@ -414,6 +417,7 @@ export {
     MemoryBasicInformation,
     Module,
     Process,
+    ProcessEntry,
     ReturnObject,
     Vector3,
     Vector4,

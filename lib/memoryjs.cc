@@ -29,6 +29,11 @@ struct Vector4 {
   float w, x, y, z;
 };
 
+struct ProcessExitCallbackParameters {
+  Napi::Function jsCallback;
+  Napi::Env env;
+};
+
 Napi::Value openProcess(const Napi::CallbackInfo& args) {
   Napi::Env env = args.Env();
 
@@ -108,6 +113,65 @@ Napi::Value openProcess(const Napi::CallbackInfo& args) {
 Napi::Value closeHandle(const Napi::CallbackInfo& args) {
   Napi::Env env = args.Env();
   BOOL success = CloseHandle((HANDLE)args[0].As<Napi::Number>().Int64Value());
+  return Napi::Boolean::New(env, success);
+}
+
+Napi::Value isProcessAlive(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+  HANDLE handle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+  DWORD exitCode;
+  BOOL success = GetExitCodeProcess(handle, &exitCode);
+
+  if (!success) {
+    Napi::Error::New(env, "Failed to get Exit Code").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  return Napi::Boolean::New(env, exitCode == STILL_ACTIVE);
+}
+
+VOID CALLBACK processExitCallback(PVOID lpParameter, BOOLEAN TimerOrWaitFired) {
+  ProcessExitCallbackParameters parameters = *reinterpret_cast<ProcessExitCallbackParameters*>(lpParameter);
+  Napi::Function callback = parameters.jsCallback;
+  Napi::Env env = parameters.env;
+
+  callback.Call(env.Global(), {});
+}
+
+// When using this function, don't forget to remove the callback with UnregisterWaitEx() after it completes.
+Napi::Value registerProcessExitCallback(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+
+  HANDLE waitHandle;
+  HANDLE processHandle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+  Napi::Function callback = args[1].As<Napi::Function>();
+  ProcessExitCallbackParameters parameters = {
+    callback,
+    env
+  };
+
+  BOOL success = RegisterWaitForSingleObject(
+    &waitHandle,
+    processHandle,
+    (WAITORTIMERCALLBACK)processExitCallback,
+    &parameters,
+    INFINITE,
+    WT_EXECUTEONLYONCE);
+
+  if (!success) {
+    Napi::Error::New(env, "Failed to register a process exit callback").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  return Napi::Value::From(env, (uintptr_t)waitHandle).As<Napi::Number>();
+}
+
+Napi::Value unregisterWaitEx(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+  HANDLE waitHandle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+
+  BOOL success = UnregisterWaitEx(waitHandle, INVALID_HANDLE_VALUE);
+
   return Napi::Boolean::New(env, success);
 }
 
@@ -1668,6 +1732,10 @@ std::string GetLastErrorToString() {
 
 Napi::Object init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "openProcess"), Napi::Function::New(env, openProcess));
+  exports.Set(Napi::String::New(env, "closeHandle"), Napi::Function::New(env, closeHandle));
+  exports.Set(Napi::String::New(env, "isProcessAlive"), Napi::Function::New(env, isProcessAlive));
+  exports.Set(Napi::String::New(env, "registerProcessExitCallback"), Napi::Function::New(env, registerProcessExitCallback));
+  exports.Set(Napi::String::New(env, "unregisterWaitEx"), Napi::Function::New(env, unregisterWaitEx));
   exports.Set(Napi::String::New(env, "getProcesses"), Napi::Function::New(env, getProcesses));
   exports.Set(Napi::String::New(env, "getModules"), Napi::Function::New(env, getModules));
   exports.Set(Napi::String::New(env, "findModule"), Napi::Function::New(env, findModule));

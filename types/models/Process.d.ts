@@ -7,4 +7,6 @@ export declare interface Process {
     szExeFile: string;
     modBaseAddr: number;
     handle: number;
+
+    on(event: 'exit', callback: () => void): Process;
 }

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const memoryjs = require('./build/Release/memoryjs');
 const Debugger = require('./src/debugger');
+const Process = require('./src/process');
 const constants = require('./src/consts');
 const { STRUCTRON_TYPE_STRING } = require('./src/utils');
 
@@ -13,14 +14,24 @@ const { STRUCTRON_TYPE_STRING } = require('./src/utils');
 
 function openProcess(processIdentifier, callback) {
   if (arguments.length === 1) {
-    return memoryjs.openProcess(processIdentifier);
+    const processInfo = memoryjs.openProcess(processIdentifier);
+    return new Process(memoryjs, processInfo);
   }
 
-  return memoryjs.openProcess(processIdentifier, callback);
+  return memoryjs.openProcess(processIdentifier, (errorMsg, processInfo) => {
+    const process = errorMsg === ""
+      ? new Process(memoryjs, processInfo)
+      : null;
+    callback(errorMsg, process);
+  });
 }
 
-function closeProcess(handle) {
+function closeHandle(handle) {
   return memoryjs.closeHandle(handle);
+}
+
+function isProcessAlive(handle) {
+  return memoryjs.isProcessAlive(handle);
 }
 
 function getProcesses(callback) {
@@ -322,7 +333,8 @@ function mapViewOfFile(processHandle, fileHandle, offset, viewSize, pageProtecti
 
 const library = {
   openProcess,
-  closeProcess,
+  closeHandle,
+  isProcessAlive,
   getProcesses,
   findModule,
   getModules,
