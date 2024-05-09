@@ -15,12 +15,12 @@ const { STRUCTRON_TYPE_STRING } = require('./src/utils');
 function openProcess(processIdentifier, callback) {
   if (arguments.length === 1) {
     const processInfo = memoryjs.openProcess(processIdentifier);
-    return new Process(memoryjs, processInfo);
+    return new Process(processInfo);
   }
 
   return memoryjs.openProcess(processIdentifier, (errorMsg, processInfo) => {
     const process = errorMsg === ""
-      ? new Process(memoryjs, processInfo)
+      ? new Process(processInfo)
       : null;
     callback(errorMsg, process);
   });
@@ -32,6 +32,10 @@ function closeHandle(handle) {
 
 function isProcessAlive(handle) {
   return memoryjs.isProcessAlive(handle);
+}
+
+function registerProcessExitCallback(handle, callback) {
+  return memoryjs.registerProcessExitCallback(handle, callback);
 }
 
 function getProcesses(callback) {
@@ -335,6 +339,7 @@ const library = {
   openProcess,
   closeHandle,
   isProcessAlive,
+  registerProcessExitCallback,
   getProcesses,
   findModule,
   getModules,

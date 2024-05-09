@@ -30,6 +30,8 @@ declare namespace MemoryJs {
 
     function isProcessAlive(handle: number): boolean;
 
+    function registerProcessExitCallback(handle: number, callback: () => void): void;
+
     function getProcesses(): ProcessEntry[];
     function getProcesses(callback: Callback<ProcessEntry[]>): void;
 
