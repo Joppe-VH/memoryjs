@@ -1,8 +1,7 @@
 const { EventEmitter } = require('events');
-const memoryjs = require('../build/Release/memoryjs');
 
 class Process extends EventEmitter {
-    constructor({
+    constructor(memoryjs, {
         dwSize,
         th32ProcessID,
         cntThreads,
@@ -23,14 +22,15 @@ class Process extends EventEmitter {
         this.modBaseAddr = modBaseAddr;
         this.handle = handle;
 
+        this._memoryjs = memoryjs;
         this._isKnownClosedHandle = false;
-        memoryjs.registerProcessExitCallback(this.handle, () => {
+        this._memoryjs.registerProcessExitCallback(this.handle, () => {
             this.emit('exit');
         });
     }
 
     closeHandle() {
-        const success = memoryjs.closeHandle(this.handle);
+        const success = this._memoryjs.closeHandle(this.handle);
         if (success) this._isKnownClosedHandle = true;
         return success;
     }

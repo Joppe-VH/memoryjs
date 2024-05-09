@@ -15,12 +15,12 @@ const { STRUCTRON_TYPE_STRING } = require('./src/utils');
 function openProcess(processIdentifier, callback) {
   if (arguments.length === 1) {
     const processInfo = memoryjs.openProcess(processIdentifier);
-    return new Process(processInfo);
+    return new Process(memoryjs, processInfo);
   }
 
   return memoryjs.openProcess(processIdentifier, (errorMsg, processInfo) => {
     const process = errorMsg === ""
-      ? new Process(processInfo)
+      ? new Process(memoryjs, processInfo)
       : null;
     callback(errorMsg, process);
   });
