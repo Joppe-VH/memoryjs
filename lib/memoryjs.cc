@@ -11,6 +11,8 @@
 #include "dll.h"
 #include "debugger.h"
 #include "process_exit_worker.h"
+#include "symbols.h"
+#include <iostream>
 
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "onecore.lib")
@@ -318,6 +320,95 @@ Napi::Value findModule(const Napi::CallbackInfo& args) {
   } else {
     // return JSON
     return moduleInfo;
+  }
+}
+
+Napi::Value initializeSymbols(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+
+  if (args.Length() != 1) {
+    Napi::Error::New(env, "requires 1 argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!args[0].IsNumber()) {
+    Napi::Error::New(env, "first argument must be a number (handle)").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  HANDLE handle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+
+  if(!symbols::initialize(handle)) {
+    std::string error = "Symbol Initialization failed with error code: " + std::to_string(GetLastError());
+    Napi::Error::New(env, error).ThrowAsJavaScriptException();
+  }
+
+  return env.Null();
+}
+
+Napi::Value cleanupSymbols(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+
+  if (args.Length() != 1) {
+    Napi::Error::New(env, "requires 1 argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!args[0].IsNumber()) {
+    Napi::Error::New(env, "first argument must be a number (handle)").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  HANDLE handle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+
+  if(!symbols::cleanup(handle)) {
+    std::string error = "Symbol cleanup failed with error code: " + std::to_string(GetLastError());
+    Napi::Error::New(env, error).ThrowAsJavaScriptException();
+  }
+
+  return env.Null();
+}
+
+Napi::Value getSymbolAddress(const Napi::CallbackInfo& args) {
+  Napi::Env env = args.Env();
+
+  if (args.Length() != 1 && args.Length() != 2 && args.Length() != 3) {
+    Napi::Error::New(env, "requires 1 argument, 2 arguments, or 3 arguments if a callback is being used").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (!args[0].IsNumber() && !args[1].IsString()) {
+    Napi::Error::New(env, "first argument must be a number (handle), second argument must be a string (symbolName)").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  if (args.Length() == 3 && !args[2].IsFunction()) {
+    Napi::Error::New(env, "third argument must be a callback function").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  HANDLE handle = (HANDLE)args[0].As<Napi::Number>().Int64Value();
+  std::string symbolName(args[1].As<Napi::String>().Utf8Value());
+
+  UINT_PTR address = symbols::getAddress(handle, symbolName.c_str());
+  
+  std::string error = "";
+  if (!address)
+    error = "Retrieving address of symbol \"" + symbolName + "\" failed with error code: " + std::to_string(GetLastError());;
+  
+  if (!address && args.Length() != 3) {
+    Napi::Error::New(env, error).ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  Napi::Value foundAddress = Napi::Value::From(env, address);
+
+  if (args.Length() == 3) {
+    Napi::Function callback = args[2].As<Napi::Function>();
+    callback.Call(env.Global(), { Napi::String::New(env, error), Napi::Value::From(env, foundAddress) });
+    return env.Null();
+  } else {
+    return foundAddress;
   }
 }
 
@@ -1705,6 +1796,9 @@ Napi::Object init(Napi::Env env, Napi::Object exports) {
   exports.Set(Napi::String::New(env, "getProcesses"), Napi::Function::New(env, getProcesses));
   exports.Set(Napi::String::New(env, "getModules"), Napi::Function::New(env, getModules));
   exports.Set(Napi::String::New(env, "findModule"), Napi::Function::New(env, findModule));
+  exports.Set(Napi::String::New(env, "initializeSymbols"), Napi::Function::New(env, initializeSymbols));
+  exports.Set(Napi::String::New(env, "cleanupSymbols"), Napi::Function::New(env, cleanupSymbols));
+  exports.Set(Napi::String::New(env, "getSymbolAddress"), Napi::Function::New(env, getSymbolAddress));
   exports.Set(Napi::String::New(env, "readMemory"), Napi::Function::New(env, readMemory));
   exports.Set(Napi::String::New(env, "readBuffer"), Napi::Function::New(env, readBuffer));
   exports.Set(Napi::String::New(env, "writeMemory"), Napi::Function::New(env, writeMemory));

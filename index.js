@@ -62,6 +62,22 @@ function getModules(processId, callback) {
   return memoryjs.getModules(processId, callback);
 }
 
+function initializeSymbols(handle) {
+  return memoryjs.initializeSymbols(handle);
+}
+
+function cleanupSymbols(handle) {
+  return memoryjs.cleanupSymbols(handle);
+}
+
+function getSymbolAddress(handle, symbolName, callback) {
+  if (arguments.length === 2) {
+    return memoryjs.getSymbolAddress(handle, symbolName);
+  }
+
+  return memoryjs.getSymbolAddress(handle, symbolName, callback);
+}
+
 function readMemory(handle, address, dataType, callback) {
   if (dataType.toLowerCase().endsWith('_be')) {
     return readMemoryBE(handle, address, dataType, callback);
@@ -343,6 +359,9 @@ const library = {
   getProcesses,
   findModule,
   getModules,
+  initializeSymbols,
+  cleanupSymbols,
+  getSymbolAddress,
   readMemory,
   readBuffer,
   writeMemory,

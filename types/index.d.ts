@@ -41,6 +41,13 @@ declare namespace MemoryJs {
     function getModules(processId: number): Module[];
     function getModules(processId: number, callback: Callback<Module[]>): void;
 
+    function initializeSymbols(handle: number): void;
+    
+    function cleanupSymbols(handle: number): void;
+
+    function getSymbolAddress(handle: number, symbolName: string): number;
+    function getSymbolAddress(handle: number, symbolName: string, callback: Callback<number>): void;
+
     function readMemory(handle: number, address: number, dataType: DataTypeBoolean): boolean;
     function readMemory(handle: number, address: number, dataType: DataTypeString): string;
     function readMemory(handle: number, address: number, dataType: DataTypeNumber): number;
